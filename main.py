@@ -5,13 +5,13 @@ MAX_SOLICITUDES = 100
 TIPOS_TRAMITE = [
     "Constancia de estudios",
     "Certificado de estudios",
-    "Record academico",
+    "Solicitud de traslado",
     "Reserva de matricula",
     "Reincorporacion academica",
     "Retiro de ciclo",
-    "Justificacion de inasistencia",
+    "Solicitud de beca",
     "Solicitud de examen sustitutorio",
-    "Carta de presentacion",
+    "Solicitud de cambio de carrera",
     "Otros"
 ]
 
