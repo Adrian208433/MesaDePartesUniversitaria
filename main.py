@@ -1,196 +1,170 @@
+import json
+import os
 
-MAX_SOLICITUDES = 100
+ARCHIVO_DATOS = "estudiantes_upn.json"
+MAX_ESTUDIANTES = 100
 
-# Lista de tipos de tramite universitario
 TIPOS_TRAMITE = [
     "Constancia de estudios",
-    "Certificado de estudios",
-    "Solicitud de traslado",
-    "Reserva de matricula",
-    "Reincorporacion academica",
-    "Retiro de ciclo",
     "Solicitud de beca",
-    "Solicitud de examen sustitutorio",
+    "Reserva de matrícula",
+    "Retiro de universidad",
+    "Solicitud de certificados",
+    "Actualización de datos",
+    "Reclamo académico",
     "Solicitud de cambio de carrera",
-    "Otros"
+    "Retiro de curso",
+    "Otros trámites"
 ]
 
 
-def registrar_solicitud(solicitudes):
-    """Registra varias solicitudes consecutivamente."""
+def cargar_estudiantes():
+    """Carga los registros guardados; si el archivo no existe, inicia una lista vacía."""
+    if not os.path.exists(ARCHIVO_DATOS):
+        return []
+    try:
+        with open(ARCHIVO_DATOS, "r", encoding="utf-8") as archivo:
+            datos = json.load(archivo)
+        if isinstance(datos, list):
+            return datos
+        print("Advertencia: el archivo no contiene una lista válida. Se iniciará vacío.")
+        return []
+    except (json.JSONDecodeError, OSError):
+        print("Advertencia: no se pudo leer el archivo. Se iniciará una lista vacía.")
+        return []
 
+
+def guardar_estudiantes(estudiantes):
+    """Guarda los registros en un archivo JSON para conservarlos entre ejecuciones."""
+    try:
+        with open(ARCHIVO_DATOS, "w", encoding="utf-8") as archivo:
+            json.dump(estudiantes, archivo, ensure_ascii=False, indent=4)
+        return True
+    except OSError:
+        print("Error: no se pudieron guardar los datos.")
+        return False
+
+
+def leer_texto(mensaje):
+    """Solicita texto no vacío y elimina espacios sobrantes."""
     while True:
-        if len(solicitudes) >= MAX_SOLICITUDES:
-            print("Se alcanzo el limite de 100 solicitudes.")
-            return
-
-        codigo = input(
-            "\nIngrese el codigo de la solicitud: "
-        ).strip()
-
-        if not codigo:
-            print("Error: el codigo no puede estar vacio.")
-            continue
-
-        # Validar codigos duplicados
-        duplicado = False
-
-        for solicitud in solicitudes:
-            if solicitud["codigo"] == codigo:
-                print("Error: el codigo de solicitud ya existe.")
-                duplicado = True
-                break
-
-        if duplicado:
-            continue
-
-        estudiante = input(
-            "Ingrese el nombre del estudiante: "
-        ).strip()
-
-        if not estudiante:
-            print("Error: el nombre es obligatorio.")
-            continue
-
-        # Repetir hasta elegir un tipo de tramite valido
-        while True:
-            print("\n=== TIPOS DE TRAMITE DISPONIBLES ===")
-
-            for i, tipo in enumerate(TIPOS_TRAMITE, start=1):
-                print(f"{i}. {tipo}")
-
-            try:
-                opcion_tramite = int(
-                    input("Seleccione el tipo de tramite (1-10): ")
-                )
-
-                if 1 <= opcion_tramite <= len(TIPOS_TRAMITE):
-                    tramite = TIPOS_TRAMITE[opcion_tramite - 1]
-                    break
-
-                print(
-                    "Opcion fuera de rango. "
-                    "Elija de nuevo del 1 al 10."
-                )
-
-            except ValueError:
-                print(
-                    "Entrada invalida. "
-                    "Ingrese un numero del 1 al 10."
-                )
-
-        # Guardar la solicitud
-        solicitudes.append({
-            "codigo": codigo,
-            "estudiante": estudiante,
-            "tramite": tramite
-        })
-
-        print("\nSolicitud universitaria registrada correctamente.")
-        print(f"Codigo: {codigo}")
-        print(f"Estudiante: {estudiante}")
-        print(f"Tramite seleccionado: {tramite}")
-
-        if len(solicitudes) >= MAX_SOLICITUDES:
-            print("Se alcanzo el limite de 100 solicitudes.")
-            return
-
-        continuar = input(
-            "\n¿Desea registrar otra solicitud? (s/n): "
-        ).strip().lower()
-
-        if continuar != "s":
-            break
+        valor = input(mensaje).strip()
+        if valor:
+            return valor
+        print("El campo no puede quedar vacío. Inténtelo nuevamente.")
 
 
-def buscar_solicitud(solicitudes):
-    """Busca una solicitud mediante su codigo."""
-
-    codigo = input(
-        "Ingrese el codigo de la solicitud que desea buscar: "
-    ).strip()
-
-    for solicitud in solicitudes:
-        if solicitud["codigo"] == codigo:
-            print("\n=== SOLICITUD ENCONTRADA ===")
-            print(f"Codigo: {solicitud['codigo']}")
-            print(f"Estudiante: {solicitud['estudiante']}")
-            print(f"Tipo de tramite: {solicitud['tramite']}")
-            return
-
-    print("No se encontro la solicitud.")
+def seleccionar_tramite():
+    """Muestra los tipos de trámite y valida la opción elegida."""
+    print("\nTIPOS DE TRÁMITE")
+    for indice, tramite in enumerate(TIPOS_TRAMITE, start=1):
+        print(f"{indice}. {tramite}")
+    while True:
+        try:
+            opcion = int(input(f"Seleccione un trámite (1-{len(TIPOS_TRAMITE)}): "))
+            if 1 <= opcion <= len(TIPOS_TRAMITE):
+                return TIPOS_TRAMITE[opcion - 1]
+            print(f"Opción fuera de rango. Elija un número del 1 al {len(TIPOS_TRAMITE)}.")
+        except ValueError:
+            print("Ingrese un número entero válido.")
 
 
-def ordenar_solicitudes(solicitudes):
-    """Ordena las solicitudes alfabeticamente por codigo."""
-
-    if len(solicitudes) < 2:
-        print("Se necesitan al menos dos solicitudes.")
+def registrar_estudiante(estudiantes):
+    """Registra un estudiante y el trámite asociado a su código."""
+    if len(estudiantes) >= MAX_ESTUDIANTES:
+        print("No se pueden registrar más estudiantes: se alcanzó el límite.")
         return
 
-    # Ordenamiento burbuja
-    for i in range(len(solicitudes) - 1):
-        for j in range(len(solicitudes) - 1 - i):
-            if solicitudes[j]["codigo"] > solicitudes[j + 1]["codigo"]:
-                solicitudes[j], solicitudes[j + 1] = (
-                    solicitudes[j + 1],
-                    solicitudes[j]
-                )
-
-    print("Solicitudes ordenadas por codigo.")
-
-
-def mostrar_solicitudes(solicitudes):
-    """Muestra todas las solicitudes registradas."""
-
-    if not solicitudes:
-        print("No hay solicitudes registradas.")
+    codigo_estudiante = leer_texto("Código de estudiante UPN: ").upper()
+    if any(estudiante["codigo_estudiante"] == codigo_estudiante
+           for estudiante in estudiantes):
+        print("Error: ya existe un registro con ese código de estudiante.")
         return
 
-    print("\n=== LISTA DE SOLICITUDES UNIVERSITARIAS ===")
+    nombre = leer_texto("Nombre completo del estudiante: ")
+    tramite = seleccionar_tramite()
+    descripcion = leer_texto("Descripción breve del trámite: ")
 
-    for solicitud in solicitudes:
-        print("----------------------------")
-        print(f"Codigo: {solicitud['codigo']}")
-        print(f"Estudiante: {solicitud['estudiante']}")
-        print(f"Tramite: {solicitud['tramite']}")
+    estudiante = {
+        "codigo_estudiante": codigo_estudiante,
+        "nombre": nombre,
+        "tramite": tramite,
+        "descripcion": descripcion
+    }
+    estudiantes.append(estudiante)
 
-
-def mostrar_menu():
-    """Muestra el menu principal."""
-
-    print("\n=== MESA DE PARTES UNIVERSITARIA ===")
-    print("=== Gestion de solicitudes UPN ===")
-    print("1. Registrar solicitud")
-    print("2. Buscar solicitud")
-    print("3. Ordenar solicitudes por codigo")
-    print("4. Mostrar solicitudes")
-    print("5. Salir")
+    if guardar_estudiantes(estudiantes):
+        print("Registro del estudiante guardado correctamente.")
+    else:
+        estudiantes.pop()
+        print("El registro no se confirmó porque no pudo guardarse.")
 
 
-def main():
-    """Controla la ejecucion del sistema."""
+def buscar_estudiante(estudiantes):
+    """Busca el registro de un estudiante mediante su código."""
+    codigo_estudiante = leer_texto("Ingrese el código de estudiante que desea buscar: ").upper()
+    for estudiante in estudiantes:
+        if estudiante["codigo_estudiante"] == codigo_estudiante:
+            mostrar_estudiante(estudiante)
+            return
+    print("No se encontró ningún registro para ese código de estudiante.")
 
-    solicitudes = []
 
+def mostrar_estudiante(estudiante):
+    print("\n--- DATOS DEL ESTUDIANTE / TRÁMITE ---")
+    print(f"Código de estudiante: {estudiante['codigo_estudiante']}")
+    print(f"Nombre:               {estudiante['nombre']}")
+    print(f"Trámite:              {estudiante['tramite']}")
+    print(f"Descripción:          {estudiante['descripcion']}")
+
+
+def mostrar_estudiantes(estudiantes):
+    """Muestra todos los registros disponibles."""
+    if not estudiantes:
+        print("Todavía no hay estudiantes registrados.")
+        return
+    print("\n--- REGISTROS DE ESTUDIANTES ---")
+    for estudiante in estudiantes:
+        mostrar_estudiante(estudiante)
+    print(f"\nTotal de registros: {len(estudiantes)}")
+
+
+def ordenar_estudiantes(estudiantes):
+    """Ordena los registros por código de estudiante y guarda el nuevo orden."""
+    estudiantes.sort(key=lambda estudiante: estudiante["codigo_estudiante"])
+    if guardar_estudiantes(estudiantes):
+        print("Registros ordenados por código de estudiante y guardados correctamente.")
+    mostrar_estudiantes(estudiantes)
+
+
+def menu():
+    estudiantes = cargar_estudiantes()
     while True:
-        mostrar_menu()
-        opcion = input("Seleccione una opcion: ").strip()
+        print("\n======================================")
+        print(" MESA DE PARTES DIGITAL UNIVERSITARIA")
+        print("                 UPN")
+        print("======================================")
+        print("1. Registrar estudiante y trámite")
+        print("2. Buscar por código de estudiante")
+        print("3. Ordenar por código de estudiante")
+        print("4. Mostrar todos los registros")
+        print("5. Salir")
+        opcion = input("Seleccione una opción (1-5): ").strip()
 
         if opcion == "1":
-            registrar_solicitud(solicitudes)
+            registrar_estudiante(estudiantes)
         elif opcion == "2":
-            buscar_solicitud(solicitudes)
+            buscar_estudiante(estudiantes)
         elif opcion == "3":
-            ordenar_solicitudes(solicitudes)
+            ordenar_estudiantes(estudiantes)
         elif opcion == "4":
-            mostrar_solicitudes(solicitudes)
+            mostrar_estudiantes(estudiantes)
         elif opcion == "5":
-            print("Cerrando el sistema de solicitudes...")
+            print("Gracias por utilizar la Mesa de Partes Digital UPN.")
             break
         else:
-            print("Opcion no valida. Elija del 1 al 5.")
+            print("Opción inválida. Seleccione un número del 1 al 5.")
 
 
 if __name__ == "__main__":
-    main()
+    menu()
