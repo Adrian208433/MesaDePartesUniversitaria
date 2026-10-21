@@ -1,0 +1,18 @@
+[
+    {
+        "correo": "adrianromeroherrera14@gmail.com",
+        "telefono": "926255826",
+        "nombre": "Adrian Jose Romero Herrera",
+        "dni": "71169901",
+        "carrera": "Ingenieria de Sistemas Computacionales",
+        "modalidad": "Primeros puestos"
+    },
+    {
+        "correo": "antonyd@gmail.com",
+        "telefono": "911678121",
+        "nombre": "Antony Sanchez Hernandez Vera",
+        "dni": "73469103",
+        "carrera": "Administracion y Negocios Internacionales",
+        "modalidad": "Examen de admision"
+    }
+]

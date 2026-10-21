@@ -2,7 +2,6 @@ import json
 import os
 import re
 
-MAX_POSTULANTES = 100
 ARCHIVO_DATOS = "postulantes_upn.json"
 
 # Carreras disponibles
@@ -178,10 +177,6 @@ def seleccionar_opcion(titulo, opciones):
 
 def registrar_postulante(postulantes):
     """Registra a una persona interesada en ingresar a la UPN."""
-
-    if len(postulantes) >= MAX_POSTULANTES:
-        print("Se alcanzo el limite de 100 postulantes.")
-        return
 
     print("\n=== REGISTRO DE NUEVO POSTULANTE ===")
 
