@@ -38,22 +38,18 @@ def cargar_postulantes():
     """Carga los postulantes guardados en JSON."""
     if not os.path.exists(ARCHIVO_DATOS):
         return []
-
     try:
         with open(ARCHIVO_DATOS, "r", encoding="utf-8") as archivo:
             datos = json.load(archivo)
 
         if isinstance(datos, list):
             return datos
-
         print("Advertencia: el archivo no contiene una lista valida.")
         return []
 
     except (json.JSONDecodeError, OSError):
         print("Advertencia: no se pudieron cargar los registros.")
         return []
-
-
 def guardar_postulantes(postulantes):
     """Guarda los postulantes en JSON."""
     try:
@@ -65,20 +61,15 @@ def guardar_postulantes(postulantes):
                 indent=4
             )
         return True
-
     except OSError:
         print("Error: no se pudieron guardar los datos.")
         return False
-
-
 def leer_texto(mensaje):
     """Solicita un texto obligatorio."""
     while True:
         texto = input(mensaje).strip()
-
         if texto:
             return texto
-
         print("Error: este campo no puede quedar vacio. Intentelo de nuevo.")
 
 
@@ -86,14 +77,11 @@ def leer_nombre():
     """Valida nombres y apellidos: solo letras y espacios."""
     while True:
         nombre = input("Ingrese los nombres y apellidos: ").strip()
-
-        # Permite letras Unicode, espacios y nombres compuestos.
         if nombre and all(
             caracter.isalpha() or caracter.isspace()
             for caracter in nombre
         ):
             return nombre
-
         print(
             "Error: el nombre solo debe contener letras y espacios. "
             "Ingrese los nombres y apellidos nuevamente."
@@ -190,7 +178,6 @@ def registrar_postulante(postulantes):
         "MODALIDADES DE ADMISION",
         MODALIDADES
     )
-
     postulante = {
         "correo": correo,
         "telefono": telefono,
@@ -199,7 +186,6 @@ def registrar_postulante(postulantes):
         "carrera": carrera,
         "modalidad": modalidad
     }
-
     postulantes.append(postulante)
 
     if guardar_postulantes(postulantes):
