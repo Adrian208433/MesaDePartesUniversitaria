@@ -1,309 +1,177 @@
 import json
 import os
-import re
 
-ARCHIVO_DATOS = "postulantes_upn.json"
+ARCHIVO_DATOS = "solicitudes_upn.json"
 
-# Carreras disponibles
-CARRERAS = [
-    "Administracion",
-    "Administracion y Negocios Internacionales",
-    "Arquitectura",
-    "Derecho",
-    "Enfermeria",
-    "Ingenieria Civil",
-    "Ingenieria de Sistemas Computacionales",
-    "Ingenieria Industrial",
-    "Medicina Humana",
-    "Nutricion y Dietetica",
-    "Psicologia",
-    "Contabilidad y Finanzas",
-    "Comunicacion y Publicidad",
-    "Marketing",
-    "Ingenieria Ambiental",
-    "Ingenieria de Software"
-]
-
-# Modalidades de admision
-MODALIDADES = [
-    "Examen de admision",
-    "Ingreso directo",
-    "Traslado externo",
-    "Primeros puestos",
-    "Otra modalidad"
+TIPOS_TRAMITE = [
+    "Constancia de estudios",
+    "Certificado de estudios",
+    "Solicitud de salida de universidad",
+    "Reserva de matricula",
+    "Reincorporacion academica",
+    "Retiro de ciclo",
+    "Solicitud de beca",
+    "Solicitud de cambio de sede",
+    "Solicitud de cambio de carrera",
+    "Otros"
 ]
 
 
-def cargar_postulantes():
-    """Carga los postulantes guardados en JSON."""
-    if not os.path.exists(ARCHIVO_DATOS):
-        return []
-    try:
-        with open(ARCHIVO_DATOS, "r", encoding="utf-8") as archivo:
-            datos = json.load(archivo)
+def cargar_solicitudes():
+    if os.path.exists(ARCHIVO_DATOS):
+        try:
+            with open(ARCHIVO_DATOS, "r", encoding="utf-8") as archivo:
+                datos = json.load(archivo)
+                return datos if isinstance(datos, list) else []
+        except (json.JSONDecodeError, OSError):
+            print("Error al cargar los datos. Se iniciara una lista vacia.")
+    return []
 
-        if isinstance(datos, list):
-            return datos
-        print("Advertencia: el archivo no contiene una lista valida.")
-        return []
 
-    except (json.JSONDecodeError, OSError):
-        print("Advertencia: no se pudieron cargar los registros.")
-        return []
-def guardar_postulantes(postulantes):
-    """Guarda los postulantes en JSON."""
+def guardar_solicitudes(solicitudes):
     try:
         with open(ARCHIVO_DATOS, "w", encoding="utf-8") as archivo:
-            json.dump(
-                postulantes,
-                archivo,
-                ensure_ascii=False,
-                indent=4
-            )
-        return True
+            json.dump(solicitudes, archivo, indent=4, ensure_ascii=False)
     except OSError:
-        print("Error: no se pudieron guardar los datos.")
-        return False
-def leer_texto(mensaje):
-    """Solicita un texto obligatorio."""
+        print("Error al guardar las solicitudes.")
+
+
+def registrar_solicitud(solicitudes):
     while True:
-        texto = input(mensaje).strip()
-        if texto:
-            return texto
-        print("Error: este campo no puede quedar vacio. Intentelo de nuevo.")
+        codigo = input("\nIngrese el codigo de la solicitud: ").strip()
 
-
-def leer_nombre():
-    """Valida nombres y apellidos: solo letras y espacios."""
-    while True:
-        nombre = input("Ingrese los nombres y apellidos: ").strip()
-        if nombre and all(
-            caracter.isalpha() or caracter.isspace()
-            for caracter in nombre
-        ):
-            return nombre
-        print(
-            "Error: el nombre solo debe contener letras y espacios. "
-            "Ingrese los nombres y apellidos nuevamente."
-        )
-
-
-def leer_correo(postulantes):
-    """Valida el formato y la unicidad del correo."""
-    while True:
-        correo = input("Ingrese el correo electronico: ").strip().lower()
-
-        patron = r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$"
-
-        if not re.fullmatch(patron, correo):
-            print("Error: ingrese un correo valido, por ejemplo usuario@gmail.com.")
+        if not codigo:
+            print("Error: el codigo no puede estar vacio.")
             continue
 
-        if any(p.get("correo", "").lower() == correo for p in postulantes):
-            print("Error: ese correo ya se encuentra registrado.")
+        if any(s["codigo"] == codigo for s in solicitudes):
+            print("Error: el codigo de solicitud ya existe.")
             continue
 
-        return correo
+        estudiante = input("Ingrese el nombre del estudiante: ").strip()
 
-
-def leer_telefono(postulantes):
-    """Valida que el telefono tenga nueve digitos."""
-    while True:
-        telefono = input("Ingrese el numero de telefono (9 digitos): ").strip()
-
-        if not telefono.isdigit() or len(telefono) != 9:
-            print(
-                "Error: el telefono debe contener exactamente 9 digitos. "
-                "Intentelo de nuevo."
-            )
+        if not estudiante:
+            print("Error: el nombre es obligatorio.")
             continue
 
-        if any(p.get("telefono") == telefono for p in postulantes):
-            print("Error: ese telefono ya se encuentra registrado.")
-            continue
+        while True:
+            print("\n=== TIPOS DE TRAMITE DISPONIBLES ===")
 
-        return telefono
+            for i, tipo in enumerate(TIPOS_TRAMITE, start=1):
+                print(f"{i}. {tipo}")
 
+            try:
+                opcion_tramite = int(
+                    input("Seleccione el tipo de tramite (1-10): ")
+                )
 
-def leer_dni(postulantes):
-    """Valida el DNI y evita duplicados."""
-    while True:
-        dni = input("Ingrese el DNI (8 digitos): ").strip()
+                if 1 <= opcion_tramite <= len(TIPOS_TRAMITE):
+                    tramite = TIPOS_TRAMITE[opcion_tramite - 1]
+                    break
 
-        if not dni.isdigit() or len(dni) != 8:
-            print("Error: el DNI debe contener exactamente 8 digitos.")
-            continue
+                print("Opcion fuera de rango. Elija del 1 al 10.")
 
-        if any(p.get("dni") == dni for p in postulantes):
-            print("Error: ese DNI ya se encuentra registrado.")
-            continue
+            except ValueError:
+                print("Entrada invalida. Ingrese un numero del 1 al 10.")
 
-        return dni
+        solicitudes.append({
+            "codigo": codigo,
+            "estudiante": estudiante,
+            "tramite": tramite
+        })
 
+        guardar_solicitudes(solicitudes)
 
-def seleccionar_opcion(titulo, opciones):
-    """Muestra opciones y valida la seleccion."""
-    print(f"\n=== {titulo} ===")
+        print("\nSolicitud universitaria registrada correctamente.")
+        print(f"Codigo: {codigo}")
+        print(f"Estudiante: {estudiante}")
+        print(f"Tramite seleccionado: {tramite}")
 
-    for indice, opcion in enumerate(opciones, start=1):
-        print(f"{indice}. {opcion}")
+        continuar = input(
+            "\n¿Desea registrar otra solicitud? (s/n): "
+        ).strip().lower()
 
-    while True:
-        try:
-            numero = int(input(
-                f"Seleccione una opcion (1-{len(opciones)}): "
-            ))
-
-            if 1 <= numero <= len(opciones):
-                return opciones[numero - 1]
-
-            print("Opcion fuera de rango. Intentelo de nuevo.")
-
-        except ValueError:
-            print("Error: ingrese un numero entero valido.")
+        if continuar != "s":
+            break
 
 
-def registrar_postulante(postulantes):
-    """Registra a una persona interesada en ingresar a la UPN."""
+def buscar_solicitud(solicitudes):
+    codigo = input(
+        "Ingrese el codigo de la solicitud que desea buscar: "
+    ).strip()
 
-    print("\n=== REGISTRO DE NUEVO POSTULANTE ===")
-
-    correo = leer_correo(postulantes)
-    telefono = leer_telefono(postulantes)
-    nombre = leer_nombre()
-    dni = leer_dni(postulantes)
-
-    carrera = seleccionar_opcion("CARRERAS DISPONIBLES", CARRERAS)
-    modalidad = seleccionar_opcion(
-        "MODALIDADES DE ADMISION",
-        MODALIDADES
-    )
-    postulante = {
-        "correo": correo,
-        "telefono": telefono,
-        "nombre": nombre,
-        "dni": dni,
-        "carrera": carrera,
-        "modalidad": modalidad
-    }
-    postulantes.append(postulante)
-
-    if guardar_postulantes(postulantes):
-        print("\nPostulante registrado correctamente.")
-        mostrar_postulante(postulante)
-    else:
-        postulantes.pop()
-        print("No se pudo confirmar el registro.")
-
-
-def buscar_postulante(postulantes):
-    """Busca un postulante por correo electronico."""
-
-    if not postulantes:
-        print("No hay postulantes registrados.")
-        return
-
-    correo = input(
-        "Ingrese el correo del postulante que desea buscar: "
-    ).strip().lower()
-
-    for postulante in postulantes:
-        if postulante.get("correo", "").lower() == correo:
-            print("\n=== POSTULANTE ENCONTRADO ===")
-            mostrar_postulante(postulante)
+    for solicitud in solicitudes:
+        if solicitud["codigo"] == codigo:
+            print("\n=== SOLICITUD ENCONTRADA ===")
+            print(f"Codigo: {solicitud['codigo']}")
+            print(f"Estudiante: {solicitud['estudiante']}")
+            print(f"Tipo de tramite: {solicitud['tramite']}")
             return
 
-    print("No se encontro ningun postulante con ese correo.")
+    print("No se encontro la solicitud.")
 
 
-def ordenar_postulantes(postulantes):
-    """Ordena los postulantes por correo electronico."""
-
-    if len(postulantes) < 2:
-        print("Se necesitan al menos dos postulantes para ordenar.")
+def ordenar_solicitudes(solicitudes):
+    if len(solicitudes) < 2:
+        print("Se necesitan al menos dos solicitudes.")
         return
 
-    copia_original = postulantes.copy()
-    postulantes.sort(key=lambda p: p.get("correo", "").lower())
+    for i in range(len(solicitudes) - 1):
+        for j in range(len(solicitudes) - 1 - i):
+            if solicitudes[j]["codigo"] > solicitudes[j + 1]["codigo"]:
+                solicitudes[j], solicitudes[j + 1] = (
+                    solicitudes[j + 1],
+                    solicitudes[j]
+                )
 
-    if guardar_postulantes(postulantes):
-        print("Postulantes ordenados por correo correctamente.")
-    else:
-        postulantes[:] = copia_original
-        print("Advertencia: no se pudo guardar el nuevo orden.")
-
-
-def mostrar_postulante(postulante):
-    """Muestra los datos de un postulante."""
-
-    print("-----------------------------------")
-    print(f"Correo:              {postulante.get('correo', 'No registrado')}")
-    print(f"Telefono:            {postulante.get('telefono', 'No registrado')}")
-    print(f"Nombre:              {postulante.get('nombre', 'No registrado')}")
-    print(f"DNI:                 {postulante.get('dni', 'No registrado')}")
-    print(f"Carrera elegida:     {postulante.get('carrera', 'No registrada')}")
-    print(f"Modalidad de ingreso: {postulante.get('modalidad', 'No registrada')}")
-    print("-----------------------------------")
+    guardar_solicitudes(solicitudes)
+    print("Solicitudes ordenadas por codigo.")
 
 
-def mostrar_postulantes(postulantes):
-    """Muestra todos los postulantes registrados."""
-
-    if not postulantes:
-        print("Todavia no hay postulantes registrados.")
+def mostrar_solicitudes(solicitudes):
+    if not solicitudes:
+        print("No hay solicitudes registradas.")
         return
 
-    print("\n=== LISTA DE POSTULANTES UPN ===")
+    print("\n=== LISTA DE SOLICITUDES UNIVERSITARIAS ===")
 
-    for postulante in postulantes:
-        mostrar_postulante(postulante)
-
-    print(f"Total de postulantes: {len(postulantes)}")
+    for solicitud in solicitudes:
+        print("----------------------------")
+        print(f"Codigo: {solicitud['codigo']}")
+        print(f"Estudiante: {solicitud['estudiante']}")
+        print(f"Tramite: {solicitud['tramite']}")
 
 
 def mostrar_menu():
-    """Muestra el menu principal."""
-
-    print("\n======================================")
-    print(" SISTEMA DE ADMISION UNIVERSITARIA")
-    print("                  UPN")
-    print("======================================")
-    print("1. Registrar nuevo postulante")
-    print("2. Buscar postulante por correo")
-    print("3. Ordenar postulantes por correo")
-    print("4. Mostrar todos los postulantes")
+    print("\n=== MESA DE PARTES UNIVERSITARIA ===")
+    print("=== Gestion de solicitudes UPN ===")
+    print("1. Registrar solicitud")
+    print("2. Buscar solicitud")
+    print("3. Ordenar solicitudes por codigo")
+    print("4. Mostrar solicitudes")
     print("5. Salir")
-    print("======================================")
 
 
 def main():
-    """Controla la ejecucion del sistema."""
-
-    postulantes = cargar_postulantes()
+    solicitudes = cargar_solicitudes()
 
     while True:
         mostrar_menu()
-        opcion = input("Seleccione una opcion (1-5): ").strip()
+        opcion = input("Seleccione una opcion: ").strip()
 
         if opcion == "1":
-            registrar_postulante(postulantes)
-
+            registrar_solicitud(solicitudes)
         elif opcion == "2":
-            buscar_postulante(postulantes)
-
+            buscar_solicitud(solicitudes)
         elif opcion == "3":
-            ordenar_postulantes(postulantes)
-
+            ordenar_solicitudes(solicitudes)
         elif opcion == "4":
-            mostrar_postulantes(postulantes)
-
+            mostrar_solicitudes(solicitudes)
         elif opcion == "5":
-            print("\nGracias por utilizar el sistema de admision UPN.")
-            print("Cerrando el programa...")
+            print("Cerrando el sistema de solicitudes...")
             break
-
         else:
-            print("Opcion invalida. Seleccione un numero del 1 al 5.")
+            print("Opcion no valida. Elija del 1 al 5.")
 
 
 if __name__ == "__main__":
