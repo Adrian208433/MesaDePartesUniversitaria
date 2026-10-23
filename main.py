@@ -1,17 +1,18 @@
 import json
 import os
+import re
 
 ARCHIVO_DATOS = "solicitudes_upn.json"
 
 TIPOS_TRAMITE = [
     "Constancia de estudios",
     "Certificado de estudios",
-    "Solicitud de salida de universidad",
+    "Solicitud de traslado",
     "Reserva de matricula",
     "Reincorporacion academica",
     "Retiro de ciclo",
     "Solicitud de beca",
-    "Solicitud de cambio de sede",
+    "Solicitud de examen sustitutorio",
     "Solicitud de cambio de carrera",
     "Otros"
 ]
@@ -24,7 +25,7 @@ def cargar_solicitudes():
                 datos = json.load(archivo)
                 return datos if isinstance(datos, list) else []
         except (json.JSONDecodeError, OSError):
-            print("Error al cargar los datos. Se iniciara una lista vacia.")
+            print("Error al cargar los datos.")
     return []
 
 
@@ -38,21 +39,36 @@ def guardar_solicitudes(solicitudes):
 
 def registrar_solicitud(solicitudes):
     while True:
-        codigo = input("\nIngrese el codigo de la solicitud: ").strip()
+        codigo = input(
+            "\nIngrese su correo institucional UPN: "
+        ).strip().upper()
 
-        if not codigo:
-            print("Error: el codigo no puede estar vacio.")
+        if not re.fullmatch(r"N[0-9]{8}@UPN\.PE", codigo):
+            print("Error: use el formato N00543593@upn.pe.")
             continue
 
         if any(s["codigo"] == codigo for s in solicitudes):
-            print("Error: el codigo de solicitud ya existe.")
+            print("Error: el correo institucional ya esta registrado.")
             continue
 
-        estudiante = input("Ingrese el nombre del estudiante: ").strip()
+        while True:
+            estudiante = input(
+                "Ingrese el nombre completo del estudiante: "
+            ).strip()
 
-        if not estudiante:
-            print("Error: el nombre es obligatorio.")
-            continue
+            if not 3 <= len(estudiante) <= 60:
+                print("Error: el nombre debe tener entre 3 y 60 caracteres.")
+                continue
+
+            if not re.fullmatch(
+                r"[^\W\d_]+(?:\s+[^\W\d_]+)*",
+                estudiante,
+                re.UNICODE
+            ):
+                print("Error: use solamente letras y espacios.")
+                continue
+
+            break
 
         while True:
             print("\n=== TIPOS DE TRAMITE DISPONIBLES ===")
@@ -61,12 +77,10 @@ def registrar_solicitud(solicitudes):
                 print(f"{i}. {tipo}")
 
             try:
-                opcion_tramite = int(
-                    input("Seleccione el tipo de tramite (1-10): ")
-                )
+                opcion = int(input("Seleccione el tramite (1-10): "))
 
-                if 1 <= opcion_tramite <= len(TIPOS_TRAMITE):
-                    tramite = TIPOS_TRAMITE[opcion_tramite - 1]
+                if 1 <= opcion <= len(TIPOS_TRAMITE):
+                    tramite = TIPOS_TRAMITE[opcion - 1]
                     break
 
                 print("Opcion fuera de rango. Elija del 1 al 10.")
@@ -82,10 +96,10 @@ def registrar_solicitud(solicitudes):
 
         guardar_solicitudes(solicitudes)
 
-        print("\nSolicitud universitaria registrada correctamente.")
-        print(f"Codigo: {codigo}")
+        print("\nSolicitud registrada correctamente.")
+        print(f"Correo institucional: {codigo}")
         print(f"Estudiante: {estudiante}")
-        print(f"Tramite seleccionado: {tramite}")
+        print(f"Tramite: {tramite}")
 
         continuar = input(
             "\n¿Desea registrar otra solicitud? (s/n): "
@@ -97,13 +111,13 @@ def registrar_solicitud(solicitudes):
 
 def buscar_solicitud(solicitudes):
     codigo = input(
-        "Ingrese el codigo de la solicitud que desea buscar: "
-    ).strip()
+        "Ingrese el correo institucional UPN que desea buscar: "
+    ).strip().upper()
 
     for solicitud in solicitudes:
         if solicitud["codigo"] == codigo:
             print("\n=== SOLICITUD ENCONTRADA ===")
-            print(f"Codigo: {solicitud['codigo']}")
+            print(f"Correo institucional: {solicitud['codigo']}")
             print(f"Estudiante: {solicitud['estudiante']}")
             print(f"Tipo de tramite: {solicitud['tramite']}")
             return
@@ -116,16 +130,9 @@ def ordenar_solicitudes(solicitudes):
         print("Se necesitan al menos dos solicitudes.")
         return
 
-    for i in range(len(solicitudes) - 1):
-        for j in range(len(solicitudes) - 1 - i):
-            if solicitudes[j]["codigo"] > solicitudes[j + 1]["codigo"]:
-                solicitudes[j], solicitudes[j + 1] = (
-                    solicitudes[j + 1],
-                    solicitudes[j]
-                )
-
+    solicitudes.sort(key=lambda s: s["codigo"])
     guardar_solicitudes(solicitudes)
-    print("Solicitudes ordenadas por codigo.")
+    print("Solicitudes ordenadas por correo institucional.")
 
 
 def mostrar_solicitudes(solicitudes):
@@ -133,11 +140,11 @@ def mostrar_solicitudes(solicitudes):
         print("No hay solicitudes registradas.")
         return
 
-    print("\n=== LISTA DE SOLICITUDES UNIVERSITARIAS ===")
+    print("\n=== SOLICITUDES UNIVERSITARIAS UPN ===")
 
     for solicitud in solicitudes:
         print("----------------------------")
-        print(f"Codigo: {solicitud['codigo']}")
+        print(f"Correo institucional: {solicitud['codigo']}")
         print(f"Estudiante: {solicitud['estudiante']}")
         print(f"Tramite: {solicitud['tramite']}")
 
